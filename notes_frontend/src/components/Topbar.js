@@ -4,7 +4,7 @@ import React from 'react';
  * Topbar with brand, actions, and status indicators.
  * - New note
  * - Refresh
- * - Error banner if any
+ * - Error banner if any (fallback; primary toasts live in App)
  */
 
 // PUBLIC_INTERFACE
@@ -32,6 +32,12 @@ export default function Topbar({ onNew, onRefresh, isLoading, isSaving, error })
         </button>
         <span className="kbd" aria-hidden="true">Ctrl/⌘ + N</span>
       </div>
+
+      {/* Subtle inline status for screen readers */}
+      <span role="status" aria-live="polite" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>
+        {isSaving ? 'Saving…' : 'Idle'}
+      </span>
+
       {(error || envMissing) ? (
         <div
           role="status"

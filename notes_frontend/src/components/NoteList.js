@@ -33,9 +33,12 @@ export default function NoteList({
       } else if (e.key === 'Enter') {
         const current = notes[idx] || notes[0];
         if (current) onSelect(current.id);
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'n') {
+        if (!envMissing) onCreate?.();
+        e.preventDefault();
       }
     },
-    [notes, selectedNoteId, onSelect]
+    [notes, selectedNoteId, onSelect, onCreate, envMissing]
   );
 
   useEffect(() => {
@@ -60,6 +63,7 @@ export default function NoteList({
         role="listbox"
         aria-activedescendant={selectedNoteId || undefined}
         tabIndex={0}
+        aria-label="Notes items. Use Up and Down arrow keys to navigate, Enter to select, Ctrl or Command + N to create."
       >
         {isLoading && (!notes || notes.length === 0) ? (
           <div className="helper">Loading notes…</div>

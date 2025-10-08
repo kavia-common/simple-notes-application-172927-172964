@@ -93,6 +93,9 @@ export default function NoteEditor({ note, onChange, onDelete, isLoading, isSavi
         aria-label="Note content"
         disabled={envMissing}
       />
+      <span role="status" aria-live="polite" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>
+        {isSaving ? 'Saving changes' : 'Changes saved'}
+      </span>
     </section>
   );
 }

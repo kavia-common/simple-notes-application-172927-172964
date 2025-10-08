@@ -2,13 +2,14 @@
   /* Ocean Professional palette */
   --primary: #2563EB; /* blue */
   --secondary: #F59E0B; /* amber */
-  --success: #F59E0B;
+  --success: #10b981;  /* emerald for success states */
   --error: #EF4444;
   --bg: #f9fafb;       /* background */
   --surface: #ffffff;  /* cards/panels */
+  --surface-2: #fbfdff;/* subtle surface gradient base */
   --text: #111827;     /* text */
   --muted: #6b7280;
-  --ring: 0 0 0 3px rgba(37, 99, 235, 0.35);
+  --ring: 0 0 0 3px rgba(37, 99, 235, 0.45);
   --shadow: 0 8px 24px rgba(17, 24, 39, 0.08);
   --radius: 12px;
 }
@@ -28,6 +29,7 @@ html, body, #root {
   background:
     radial-gradient(1200px 600px at -10% -10%, rgba(37,99,235,0.06), transparent 60%),
     radial-gradient(800px 400px at 110% -10%, rgba(245,158,11,0.08), transparent 50%),
+    linear-gradient(180deg, rgba(37,99,235,0.02), rgba(249,250,251,1) 35%),
     var(--bg);
 }
 
@@ -38,7 +40,7 @@ html, body, #root {
   justify-content: space-between;
   gap: 12px;
   padding: 14px 18px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.85));
+  background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,255,255,0.88));
   backdrop-filter: saturate(150%) blur(6px);
   border-bottom: 1px solid rgba(17,24,39,0.06);
   position: sticky;
@@ -58,7 +60,7 @@ html, body, #root {
   width: 28px;
   height: 28px;
   border-radius: 8px;
-  background: linear-gradient(135deg, rgba(37,99,235,0.9), rgba(37,99,235,0.6));
+  background: linear-gradient(135deg, rgba(37,99,235,0.95), rgba(37,99,235,0.6));
   box-shadow: 0 6px 16px rgba(37,99,235,0.35), inset 0 1px 1px rgba(255,255,255,0.35);
 }
 
@@ -77,12 +79,13 @@ html, body, #root {
   border-radius: 10px;
   font-weight: 600;
   cursor: pointer;
-  transition: transform .08s ease, box-shadow .2s ease, background-color .2s ease, border-color .2s ease;
+  transition: transform .08s ease, box-shadow .2s ease, background-color .2s ease, border-color .2s ease, filter .2s ease;
   box-shadow: 0 1px 0 rgba(17,24,39,0.03);
 }
 .btn:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
-.btn:active { transform: translateY(0); }
+.btn:active { transform: translateY(0); filter: brightness(.98); }
 .btn:focus-visible { outline: none; box-shadow: var(--ring); }
+.btn[disabled] { cursor: not-allowed; opacity: .65; }
 
 .btn-primary {
   background: linear-gradient(180deg, #2f6ef0, #2563EB);
@@ -116,7 +119,7 @@ html, body, #root {
 }
 
 .sidebar {
-  background: var(--surface);
+  background: linear-gradient(180deg, var(--surface), var(--surface-2));
   border: 1px solid rgba(17,24,39,0.08);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
@@ -155,7 +158,7 @@ html, body, #root {
 
 /* Note List */
 .note-list {
-  background: var(--surface);
+  background: linear-gradient(180deg, var(--surface), var(--surface-2));
   border: 1px solid rgba(17,24,39,0.08);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
@@ -171,7 +174,7 @@ html, body, #root {
   justify-content: space-between;
   padding: 10px 12px;
   border-bottom: 1px solid rgba(17,24,39,0.08);
-  background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7));
+  background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,255,255,0.78));
 }
 
 .note-items {
@@ -216,7 +219,7 @@ html, body, #root {
 
 /* Editor */
 .editor {
-  background: var(--surface);
+  background: linear-gradient(180deg, var(--surface), var(--surface-2));
   border: 1px solid rgba(17,24,39,0.08);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
@@ -255,6 +258,38 @@ html, body, #root {
 }
 
 .helper {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* Toasts / status messages */
+.toast-region {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  display: grid;
+  gap: 8px;
+  z-index: 50;
+}
+.toast {
+  background: #ffffff;
+  border: 1px solid rgba(17,24,39,0.08);
+  border-left: 4px solid var(--primary);
+  color: var(--text);
+  padding: 10px 12px;
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  font-size: 14px;
+  min-width: 260px;
+}
+.toast.success { border-left-color: var(--success); }
+.toast.error { border-left-color: var(--error); }
+.toast .toast-title {
+  font-weight: 700;
+  margin-right: 8px;
+}
+.toast .toast-meta {
   font-size: 12px;
   color: var(--muted);
 }
