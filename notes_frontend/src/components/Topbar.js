@@ -8,8 +8,10 @@ import React from 'react';
  */
 
 // PUBLIC_INTERFACE
-export default function Topbar({ onNew, onRefresh, isLoading, error }) {
+export default function Topbar({ onNew, onRefresh, isLoading, isSaving, error }) {
   /** Renders brand and actions. */
+  const envMissing = !process.env.REACT_APP_SUPABASE_URL || !process.env.REACT_APP_SUPABASE_KEY;
+
   return (
     <header className="topbar" role="banner" aria-label="Application top bar">
       <div className="brand" aria-label="Simple Notes">
@@ -17,20 +19,20 @@ export default function Topbar({ onNew, onRefresh, isLoading, error }) {
         Simple Notes
       </div>
       <div className="actions">
-        <button className="btn btn-primary" onClick={onNew} aria-label="Create new note">
+        <button className="btn btn-primary" onClick={onNew} aria-label="Create new note" disabled={envMissing}>
           + New
         </button>
         <button
           className="btn"
           onClick={onRefresh}
           aria-label="Refresh notes"
-          disabled={isLoading}
+          disabled={isLoading || envMissing}
         >
-          {isLoading ? 'Refreshing…' : 'Refresh'}
+          {isLoading ? 'Refreshing…' : isSaving ? 'Saving…' : 'Refresh'}
         </button>
         <span className="kbd" aria-hidden="true">Ctrl/⌘ + N</span>
       </div>
-      {error ? (
+      {(error || envMissing) ? (
         <div
           role="status"
           aria-live="polite"
@@ -48,7 +50,9 @@ export default function Topbar({ onNew, onRefresh, isLoading, error }) {
             fontSize: 12,
           }}
         >
-          {String(error)}
+          {envMissing
+            ? 'Supabase env missing: set REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_KEY.'
+            : String(error)}
         </div>
       ) : null}
     </header>

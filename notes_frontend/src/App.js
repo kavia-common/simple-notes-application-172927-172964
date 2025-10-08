@@ -20,6 +20,7 @@ function App() {
     selectedNoteId,
     selectedNote,
     isLoading,
+    isSaving,
     error,
     createNote,
     updateNote,
@@ -34,6 +35,7 @@ function App() {
         onNew={() => createNote({ title: 'Untitled', content: '' })}
         onRefresh={refresh}
         isLoading={isLoading}
+        isSaving={isSaving}
         error={error}
       />
       <div className="app-content" role="main">
@@ -58,6 +60,7 @@ function App() {
             }
             onDelete={() => selectedNote && deleteNote(selectedNote.id)}
             isLoading={isLoading}
+            isSaving={isSaving}
           />
         </div>
       </div>

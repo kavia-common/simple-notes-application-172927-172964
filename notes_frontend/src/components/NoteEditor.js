@@ -6,11 +6,12 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
  */
 
 // PUBLIC_INTERFACE
-export default function NoteEditor({ note, onChange, onDelete, isLoading }) {
+export default function NoteEditor({ note, onChange, onDelete, isLoading, isSaving }) {
   /** Controlled state synced with selected note. */
   const [title, setTitle] = useState(note?.title || '');
   const [content, setContent] = useState(note?.content || '');
   const timer = useRef(null);
+  const envMissing = !process.env.REACT_APP_SUPABASE_URL || !process.env.REACT_APP_SUPABASE_KEY;
 
   useEffect(() => {
     setTitle(note?.title || '');
@@ -22,7 +23,7 @@ export default function NoteEditor({ note, onChange, onDelete, isLoading }) {
       window.clearTimeout(timer.current);
       timer.current = window.setTimeout(() => {
         onChange?.(changes);
-      }, 250);
+      }, 300);
     },
     [onChange]
   );
@@ -51,14 +52,18 @@ export default function NoteEditor({ note, onChange, onDelete, isLoading }) {
     <section className="editor" aria-label="Note editor">
       <div className="editor-toolbar">
         <div className="helper">
-          Editing: <strong>{note.title || 'Untitled'}</strong>
+          Editing: <strong>{note.title || 'Untitled'}</strong>{' '}
+          <span aria-live="polite" style={{ marginLeft: 8, color: '#6b7280' }}>
+            {isSaving ? 'Saving…' : 'All changes saved'}
+          </span>
         </div>
         <div>
           <button
             className="btn btn-danger"
             onClick={() => onDelete?.(note.id)}
             aria-label="Delete current note"
-            disabled={isLoading}
+            disabled={isLoading || envMissing}
+            title={envMissing ? 'Supabase env vars missing' : 'Delete note'}
           >
             Delete
           </button>
@@ -74,6 +79,7 @@ export default function NoteEditor({ note, onChange, onDelete, isLoading }) {
         value={title}
         onChange={handleTitleChange}
         aria-label="Note title"
+        disabled={envMissing}
       />
       <label className="helper" htmlFor="note-content" style={{ marginTop: 6 }}>
         Content
@@ -81,10 +87,11 @@ export default function NoteEditor({ note, onChange, onDelete, isLoading }) {
       <textarea
         id="note-content"
         className="textarea"
-        placeholder="Write your note here..."
+        placeholder={envMissing ? 'Set Supabase env vars to enable editing.' : 'Write your note here...'}
         value={content}
         onChange={handleContentChange}
         aria-label="Note content"
+        disabled={envMissing}
       />
     </section>
   );

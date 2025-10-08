@@ -10,11 +10,12 @@ import notesService from '../services/notesService';
 export default function useNotes() {
   /**
    * Manage list of notes, selection, loading and error state.
-   * PUBLIC_INTERFACE: returns { notes, selectedNoteId, selectedNote, isLoading, error, createNote, updateNote, deleteNote, selectNote, refresh }
+   * PUBLIC_INTERFACE: returns { notes, selectedNoteId, selectedNote, isLoading, isSaving, error, createNote, updateNote, deleteNote, selectNote, refresh }
    */
   const [notes, setNotes] = useState([]);
   const [selectedNoteId, setSelectedNoteId] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState(null);
   const pending = useRef(new Map()); // track optimistic operations by id
 
@@ -26,7 +27,6 @@ export default function useNotes() {
       setError(err.message || String(err));
     }
     setNotes(Array.isArray(data) ? data : []);
-    // Preserve selection if possible
     setIsLoading(false);
   }, []);
 
@@ -56,6 +56,7 @@ export default function useNotes() {
   const createNote = useCallback(async ({ title, content }) => {
     /** Optimistically add a new note. */
     setError(null);
+    setIsSaving(true);
     const tempId = `temp-${Date.now()}`;
     const now = new Date().toISOString();
     const optimistic = { id: tempId, title: title || 'Untitled', content: content || '', created_at: now, updated_at: now };
@@ -70,6 +71,7 @@ export default function useNotes() {
       if (selectedNoteId === tempId) setSelectedNoteId(null);
       setError(err?.message || 'Failed to create note.');
       pending.current.delete(tempId);
+      setIsSaving(false);
       return;
     }
     // replace temp with real
@@ -79,6 +81,7 @@ export default function useNotes() {
     });
     setSelectedNoteId(data.id);
     pending.current.delete(tempId);
+    setIsSaving(false);
   }, [selectedNoteId]);
 
   // PUBLIC_INTERFACE
@@ -86,8 +89,12 @@ export default function useNotes() {
     /** Optimistically update the note fields. */
     if (!id) return;
     setError(null);
+    setIsSaving(true);
     const prev = notes.find((n) => n.id === id);
-    if (!prev) return;
+    if (!prev) {
+      setIsSaving(false);
+      return;
+    }
     const next = { ...prev };
     if (typeof title !== 'undefined') next.title = title;
     if (typeof content !== 'undefined') next.content = content;
@@ -102,10 +109,12 @@ export default function useNotes() {
       setNotes((list) => list.map((n) => (n.id === id ? prev : n)));
       setError(err?.message || 'Failed to update note.');
       pending.current.delete(id);
+      setIsSaving(false);
       return;
     }
     setNotes((list) => list.map((n) => (n.id === id ? data : n)));
     pending.current.delete(id);
+    setIsSaving(false);
   }, [notes]);
 
   // PUBLIC_INTERFACE
@@ -113,6 +122,7 @@ export default function useNotes() {
     /** Optimistically delete a note by id. */
     if (!id) return;
     setError(null);
+    setIsSaving(true);
     const prevList = notes;
     setNotes((list) => list.filter((n) => n.id !== id));
     if (selectedNoteId === id) setSelectedNoteId(null);
@@ -124,9 +134,11 @@ export default function useNotes() {
       setNotes(prevList);
       setError(err.message || 'Failed to delete note.');
       pending.current.delete(id);
+      setIsSaving(false);
       return;
     }
     pending.current.delete(id);
+    setIsSaving(false);
   }, [notes, selectedNoteId]);
 
   return {
@@ -134,6 +146,7 @@ export default function useNotes() {
     selectedNoteId,
     selectedNote,
     isLoading,
+    isSaving,
     error,
     createNote,
     updateNote,

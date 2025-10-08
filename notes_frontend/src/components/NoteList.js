@@ -16,6 +16,7 @@ export default function NoteList({
 }) {
   /** Accessible list with keyboard support. */
   const containerRef = useRef(null);
+  const envMissing = !process.env.REACT_APP_SUPABASE_URL || !process.env.REACT_APP_SUPABASE_KEY;
 
   const handleKeyDown = useCallback(
     (e) => {
@@ -48,7 +49,7 @@ export default function NoteList({
       <div className="note-list-header">
         <strong>Notes</strong>
         <div>
-          <button className="btn btn-primary" onClick={onCreate} aria-label="Create note">
+          <button className="btn btn-primary" onClick={onCreate} aria-label="Create note" disabled={envMissing}>
             + New
           </button>
         </div>
@@ -92,6 +93,7 @@ export default function NoteList({
                       onDelete(note.id);
                     }}
                     title="Delete"
+                    disabled={envMissing}
                   >
                     🗑
                   </button>
@@ -100,7 +102,7 @@ export default function NoteList({
             );
           })
         ) : (
-          <div className="helper">No notes yet. Create your first note.</div>
+          <div className="helper">{envMissing ? 'Supabase env not set. Add env vars to load notes.' : 'No notes yet. Create your first note.'}</div>
         )}
       </div>
     </section>
