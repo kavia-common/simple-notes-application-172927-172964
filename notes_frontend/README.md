@@ -2,81 +2,164 @@
 
 This project provides a minimal React template with a clean, modern UI and minimal dependencies.
 
+It is configured to use Supabase as a backend for storing notes.
+
 ## Features
 
-- **Lightweight**: No heavy UI frameworks - uses only vanilla CSS and React
-- **Modern UI**: Clean, responsive design with KAVIA brand styling
-- **Fast**: Minimal dependencies for quick loading times
-- **Simple**: Easy to understand and modify
+- Lightweight React stack (CRA) with clean, responsive UI
+- Supabase integration for CRUD operations on a `notes` table
+- Accessibility-focused components
+- Minimal configuration via environment variables
+
+## Requirements
+
+- Node.js LTS
+- A Supabase project with the following environment variables set at build time:
+  - REACT_APP_SUPABASE_URL
+  - REACT_APP_SUPABASE_KEY
+
+See .env.example for details.
 
 ## Getting Started
 
-In the project directory, you can run:
+1) Install dependencies:
+   npm install
 
-### `npm start`
+2) Configure environment:
+   - Copy .env.example to .env
+   - Fill in:
+     - REACT_APP_SUPABASE_URL
+     - REACT_APP_SUPABASE_KEY
 
-Runs the app in development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+3) Start the app:
+   npm start
+   Open http://localhost:3000
 
-### `npm test`
+4) Run tests:
+   CI=true npm test
 
-Launches the test runner in interactive watch mode.
+## Supabase Setup
 
-### `npm run build`
+This app expects a `notes` table in your Supabase project's public schema.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Environment variables used by the code (src/lib/supabaseClient.js):
+- REACT_APP_SUPABASE_URL
+- REACT_APP_SUPABASE_KEY
 
-## Customization
+These must match exactly; do not rename them.
 
-### Colors
+### SQL: Create notes table
 
-The main brand colors are defined as CSS variables in `src/App.css`:
+Run the following SQL in the Supabase SQL editor:
 
-```css
-:root {
-  --kavia-orange: #E87A41;
-  --kavia-dark: #1A1A1A;
-  --text-color: #ffffff;
-  --text-secondary: rgba(255, 255, 255, 0.7);
-  --border-color: rgba(255, 255, 255, 0.1);
-}
+```sql
+-- Table: public.notes
+create table if not exists public.notes (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  content text not null default '',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+-- Helpful update trigger to keep updated_at current
+create or replace function public.set_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_set_updated_at on public.notes;
+create trigger trg_set_updated_at
+before update on public.notes
+for each row execute function public.set_updated_at();
 ```
 
-### Components
+### Row Level Security (RLS)
 
-This template uses pure HTML/CSS components instead of a UI framework. You can find component styles in `src/App.css`. 
+If you are using the anon/public key in the frontend without auth, enable RLS and choose one of the following approaches:
 
-Common components include:
-- Buttons (`.btn`, `.btn-large`)
-- Container (`.container`)
-- Navigation (`.navbar`)
-- Typography (`.title`, `.subtitle`, `.description`)
+A) Open read/write for demo/testing only (not recommended for production):
+```sql
+alter table public.notes enable row level security;
+
+-- Allow anyone (including anon) to read
+create policy "notes_read_all"
+on public.notes
+for select
+to anon
+using (true);
+
+-- Allow anyone (including anon) to insert
+create policy "notes_insert_all"
+on public.notes
+for insert
+to anon
+with check (true);
+
+-- Allow anyone (including anon) to update
+create policy "notes_update_all"
+on public.notes
+for update
+to anon
+using (true)
+with check (true);
+
+-- Allow anyone (including anon) to delete
+create policy "notes_delete_all"
+on public.notes
+for delete
+to anon
+using (true);
+```
+
+B) If you plan to add auth later, you can scope notes to each user by adding a user_id column and restricting by auth.uid(). For now, this app does not require auth and uses the anon key; choose option A to get started.
+
+### PostgREST notes
+
+The service reads/writes to the `public.notes` table using the anon key through the browser client. Ensure your policies match your intended security posture.
+
+## How the app uses Supabase
+
+- Client initialization: src/lib/supabaseClient.js
+  - Reads REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_KEY
+  - Creates a singleton Supabase client
+
+- CRUD operations: src/services/notesService.js
+  - listNotes: select * from notes order by created_at desc
+  - createNote: insert title/content, returns the inserted row
+  - updateNote: updates title/content, returns the updated row
+  - deleteNote: deletes by id, returns the deleted id
+
+- UI behavior when env missing:
+  - Buttons and inputs are disabled and a status message appears indicating missing REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_KEY.
+
+## Deployment notes
+
+- Build with the environment variables present so the client is configured at runtime:
+  - REACT_APP_SUPABASE_URL
+  - REACT_APP_SUPABASE_KEY
+
+- For production, configure Supabase Authentication > URL Configuration:
+  - Site URL: your production domain
+  - Add redirect URLs if you later add email/OAuth flows
+
+## Troubleshooting
+
+- If you see "Supabase env missing" in the UI, ensure your .env (or deployment env) defines:
+  - REACT_APP_SUPABASE_URL
+  - REACT_APP_SUPABASE_KEY
+
+- If you receive errors from the notes service, verify:
+  - The `public.notes` table exists
+  - RLS policies allow your anon key actions (see policies above)
+  - Network access to your Supabase project is not blocked
 
 ## Learn More
 
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+- React documentation: https://reactjs.org/
+- Supabase docs: https://supabase.com/docs
