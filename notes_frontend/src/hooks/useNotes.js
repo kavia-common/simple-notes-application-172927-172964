@@ -22,7 +22,9 @@ export default function useNotes() {
   const load = useCallback(async () => {
     setIsLoading(true);
     setError(null);
-    const { data, error: err } = await notesService.listNotes();
+    // Make the hook resilient to undefined or unexpected results from notesService.listNotes
+    const res = await notesService.listNotes();
+    const { data, error: err } = res || {};
     if (err) {
       setError(err.message || String(err));
     }
